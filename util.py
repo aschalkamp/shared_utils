@@ -8,6 +8,8 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import json
 
+import argparse
+
 import numpy as np
 import pandas as pd
 from scipy.stats import fisher_exact, rankdata, norm as norm_dist
@@ -70,6 +72,11 @@ def log_file_open():
     global _log_file
     return '_log_file' in globals()
     
+def create_time_measure_if_verbose(opening_statement, verbose):
+    if verbose:
+        return TimeMeasure(opening_statement)
+    else:
+        return DummyContext()
     
 ### General ###
 
@@ -115,7 +122,7 @@ def safe_symlink(src, dst, post_creation_hook = lambda created_symlink: None):
             os.symlink(src, dst)
             post_creation_hook(dst)
             log('Created link: %s -> %s' % (src, dst))
-        except OSError, e:
+        except OSError as e:
             if e.errno == 17:
                 log('%s: already exists after all.' % dst)
             else:
@@ -124,7 +131,7 @@ def safe_symlink(src, dst, post_creation_hook = lambda created_symlink: None):
 def safe_mkdir(path):
     try:
         os.mkdir(path)
-    except OSError, e:
+    except OSError as e:
         assert 'File exists' in str(e), str(e)
         
 def format_size_in_bytes(size):
@@ -318,7 +325,70 @@ def merge_lists_with_compatible_relative_order(lists):
     
     return reduce(merge_two_sublists, lists, [])
     
+    
+### argparse ###
+
+def get_parser_bool_type(parser):
+
+    def _bool_type(value):
+        if isinstance(value, bool):
+           return value
+        if value.lower() in ['yes', 'true', 't', 'y', '1']:
+            return True
+        elif value.lower() in ['no', 'false', 'f', 'n', '0']:
+            return False
+        else:
+            raise parser.error('"%s": unrecognized boolean value.' % value)
+            
+    return _bool_type
+
+def get_parser_file_type(parser, must_exist = False):
+
+    def _file_type(path):
+    
+        path = os.path.expanduser(path)
+    
+        if must_exist:
+            if not os.path.exists(path):
+                parser.error('File doesn\'t exist: %s' % path)
+            elif not os.path.isfile(path):
+                parser.error('Not a file: %s' % path)
+            else:
+                return path
+        else:
         
+            dir_path = os.path.dirname(path)
+        
+            if not os.path.exists(dir_path):
+                parser.error('Parent directory doesn\'t exist: %s' % dir_path)
+            else:
+                return path
+    
+    return _file_type
+
+def get_parser_directory_type(parser, create_if_not_exists = False):
+    
+    def _directory_type(path):
+    
+        path = os.path.expanduser(path)
+    
+        if not os.path.exists(path):
+            if create_if_not_exists:
+                if os.path.exists(os.path.dirname(path)):
+                    parser.error('Cannot create empty directory (parent directory doesn\'t exist): %s' % path)
+                else:
+                    os.mkdir(path)
+                    return path
+            else:
+                parser.error('Path doesn\'t exist: %s' % path)
+        elif not os.path.isdir(path):
+            parser.error('Not a directory: %s' % path)
+        else:
+            return path
+        
+    return _directory_type
+
+    
 ### Numpy ###
 
 def normalize(x):
@@ -955,6 +1025,14 @@ def liftover_loci_in_df(df, chrom_column = 'chromosome', pos_column = 'position'
     
     
 ### Helper classes ###
+
+class DummyContext(object):
+
+    def __enter__(self):
+        pass
+        
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        pass
 
 class TimeMeasure(object):
 

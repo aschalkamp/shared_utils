@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 import sys
 import os
 import re
@@ -17,8 +15,6 @@ from statsmodels.sandbox.stats.multicomp import multipletests
 
 import matplotlib.pyplot as plt
 from matplotlib import patches
-
-from interval_tree import IntervalTree
 
 from IPython.display import display
 
@@ -278,6 +274,8 @@ def calc_overlap_between_segments(ordered_segments1, ordered_segments2):
     Calculates the total overlap size between a pair of ordered and disjoint groups of segments.
     Each group of segment is given by: [(start1, end1), (start2, end2), ...]. 
     '''
+    
+    from interval_tree import IntervalTree
     
     if len(ordered_segments1) == 0 or len(ordered_segments2) == 0:
         return 0

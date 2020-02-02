@@ -18,6 +18,9 @@ from statsmodels.sandbox.stats.multicomp import multipletests
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
+from Bio.Seq import Seq
+from Bio.Alphabet import Alphabet
+
 from interval_tree import IntervalTree
 
 from IPython.display import display
@@ -146,6 +149,23 @@ def format_size_in_bytes(size):
             size /= UNIT_RATIO
             
     return '%.1f%s' % (size, UNITS[unit_index])
+    
+def get_recognized_files_in_dir(dir_path, file_parser, log_unrecognized_files = True):
+    
+    recognized_files = []
+    unrecognized_files = []
+    
+    for file_name in os.listdir(dir_path):
+        try:
+            recognized_files.append((file_parser(file_name), file_name))
+        except:
+            if log_unrecognized_files:
+                unrecognized_files.append(file_name)
+                
+    if log_unrecognized_files and len(unrecognized_files) > 0:
+        log('%s: %d unrecognized files: %s' % (dir_path, len(unrecognized_files), ', '.join(unrecognized_files)))
+        
+    return list(sorted(recognized_files))
     
 def monitor_memory(min_bytes_to_log = 1e08, max_elements_to_check = 100, collect_gc = True, del_output_variables = True, \
         list_like_types = [list, tuple, np.ndarray, pd.Series], dict_like_types = [dict, defaultdict]):
@@ -359,7 +379,7 @@ def get_parser_file_type(parser, must_exist = False):
         
             dir_path = os.path.dirname(path)
         
-            if not os.path.exists(dir_path):
+            if dir_path and not os.path.exists(dir_path):
                 parser.error('Parent directory doesn\'t exist: %s' % dir_path)
             else:
                 return path
@@ -374,7 +394,10 @@ def get_parser_directory_type(parser, create_if_not_exists = False):
     
         if not os.path.exists(path):
             if create_if_not_exists:
-                if os.path.exists(os.path.dirname(path)):
+            
+                parent_path = os.path.dirname(path)
+            
+                if parent_path and not os.path.exists(parent_path):
                     parser.error('Cannot create empty directory (parent directory doesn\'t exist): %s' % path)
                 else:
                     os.mkdir(path)
@@ -387,6 +410,51 @@ def get_parser_directory_type(parser, create_if_not_exists = False):
             return path
         
     return _directory_type
+    
+def add_parser_task_arguments(parser):
+    parser.add_argument('--task-index', dest = 'task_index', metavar = '<0,...,N_TASKS-1>', type = int, default = None, help = 'If you want to ' + \
+            ' distribute this process across multiple computation resources (e.g. on a cluster) you can specify the total number of tasks ' + \
+            '(--total-tasks) to split it into, and the index of the current task to run (--task-index).')
+    parser.add_argument('--total-tasks', dest = 'total_tasks', metavar = '<N_TASKS>', type = int, default = None, help = 'See --task-index.')
+    parser.add_argument('--task-index-env-variable', dest = 'task_index_env_variable', metavar = '<e.g. SLURM_ARRAY_TASK_ID>', type = str, default = None, \
+            help = 'Instead of specifying a hardcoded --task-index, you can specify an environtment variable to take it from (e.g. SLURM_ARRAY_TASK_ID ' + \
+            'if you use SLURM to distribute the jobs).')
+    parser.add_argument('--total-tasks-env-variable', dest = 'total_tasks_env_variable', metavar = '<e.g. SLURM_ARRAY_TASK_COUNT>', type = str, \
+            default = None, help = 'Instead of specifying a hardcoded --total-tasks, you can specify an environtment variable to take it from (e.g. ' + \
+            'SLURM_ARRAY_TASK_COUNT if you use SLURM to distribute the jobs).')
+            
+def determine_parser_task_details(args):
+    
+    if args.task_index is not None and args.task_index_env_variable is not None:
+        parser.error('You must choose between --task-index and --task-index-env-variable.')
+    
+    if args.task_index is not None:
+        task_index = args.task_index
+    elif args.task_index_env_variable is not None:
+        task_index = int(os.getenv(args.task_index_env_variable))
+    else:
+        task_index = None
+        
+    if args.total_tasks is not None and args.total_tasks_env_variable is not None:
+        parser.error('You must choose between --total-tasks and --total-tasks-env-variable.')
+        
+    if args.total_tasks is not None:
+        total_tasks = args.total_tasks
+    elif args.total_tasks_env_variable is not None:
+        total_tasks = int(os.getenv(args.total_tasks_env_variable))
+    else:
+        total_tasks = None
+
+    if task_index is None and total_tasks is None:
+        task_index = 0
+        total_tasks = 1
+    elif task_index is None or total_tasks is None:
+        parser.error('Task index and total tasks must either be specified or unspecified together.')
+    
+    if task_index < 0 or task_index >= total_tasks:
+        parser.error('Task index must be in the range 0,...,(total tasks)-1.')
+    
+    return task_index, total_tasks
 
     
 ### Numpy ###
@@ -946,6 +1014,17 @@ def draw_manhattan_plot(gwas_results, significance_treshold = 5e-08, max_results
     ax.set_ylim(0, max_y + 1)
     
     return ax
+    
+    
+### Biopython Helper Functions ###
+
+def as_biopython_seq(seq):
+    if isinstance(seq, Seq):
+        return seq
+    elif isinstance(seq, str):
+        return Seq(seq, Alphabet())
+    else:
+        raise Exception('Cannot resolve type %s as Biopython Seq' % type(seq))
             
             
 ### Slurm ###

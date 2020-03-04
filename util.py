@@ -19,10 +19,6 @@ from matplotlib import patches
 from Bio.Seq import Seq
 from Bio.Alphabet import Alphabet
 
-from interval_tree import IntervalTree
-
-from IPython.display import display
-
 
 ### Logging ###
 
@@ -567,6 +563,8 @@ def transpose_dataset(src, dst, max_memory_bytes, flush_func = None):
 ### Pandas ###
 
 def summarize(df, n = 5, sample = False):
+    
+    from IPython.display import display
     
     if sample:
         display(df.sample(n))

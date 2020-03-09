@@ -464,7 +464,7 @@ def normalize(x):
     sigma = np.std(x)
     
     if sigma == 0:
-        return 0 * x
+        return np.ones_like(x)
     else:
         return (x - u) / sigma
     

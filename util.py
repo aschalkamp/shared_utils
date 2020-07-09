@@ -957,7 +957,7 @@ def draw_manhattan_plot(gwas_results, significance_treshold = 5e-08, max_results
     - pval (float)
     '''
         
-    CHROMS = map(str, range(1, 23)) + ['X', 'Y']
+    CHROMS = list(map(str, range(1, 23))) + ['X', 'Y']
     CHROM_TO_COLOR = {'1': '#0100fb', '2': '#ffff00', '3': '#00ff03', '4': '#bfbfbf', '5': '#acdae9', '6': '#a020f1',
             '7': '#ffa502', '8': '#ff00fe', '9': '#fe0000', '10': '#90ee90', '11': '#a52929', '12': '#000000', 
             '13': '#ffbfcf', '14': '#4484b2', '15': '#b63063', '16': '#f8816f', '17': '#ed84f3', '18': '#006401',

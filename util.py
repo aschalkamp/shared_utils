@@ -18,7 +18,6 @@ import matplotlib.pyplot as plt
 from matplotlib import patches
 
 from Bio.Seq import Seq
-from Bio.Alphabet import Alphabet
 
 
 ### Logging ###
@@ -1021,7 +1020,7 @@ def as_biopython_seq(seq):
     if isinstance(seq, Seq):
         return seq
     elif isinstance(seq, str):
-        return Seq(seq, Alphabet())
+        return Seq(seq)
     else:
         raise Exception('Cannot resolve type %s as Biopython Seq' % type(seq))
             

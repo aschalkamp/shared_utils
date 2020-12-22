@@ -3,6 +3,7 @@ import os
 import re
 import gc
 from collections import defaultdict
+from functools import reduce
 from datetime import datetime, timedelta
 import json
 

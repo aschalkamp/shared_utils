@@ -285,6 +285,22 @@ def get_job_and_subjob_indices(n_jobs, n_tasks, task_index):
         n_tasks_in_job = n_tasks_in_unprivileged_jobs
         
     return job_index, index_within_job, n_tasks_in_job
+    
+def choose_from_cartesian_product(list_of_values, i, total = None):
+    
+    n = int(np.prod(list(map(len, list_of_values))))
+    
+    if total is not None:
+        assert n == total
+    
+    chosen_elements = []
+    
+    for values in list_of_values:
+        n //= len(values)
+        chosen_elements.append(values[i // n])
+        i %= n
+
+    return chosen_elements
 
 def calc_overlap_between_segments(ordered_segments1, ordered_segments2):
     
@@ -737,8 +753,9 @@ def append_df_to_excel(excel_writer, df, sheet_name, index = True):
     for column_index, column_name in enumerate(df.columns):
         worksheet.write(0, column_index + int(index), column_name, header_format)
         
-    for row_index_number, row_index_value in enumerate(df.index):
-        worksheet.write(row_index_number + 1, 0, row_index_value)
+    if index:
+        for row_index_number, row_index_value in enumerate(df.index):
+            worksheet.write(row_index_number + 1, 0, row_index_value)
         
 def is_binary_series(series):
 
@@ -991,7 +1008,9 @@ def draw_manhattan_plot(gwas_results, significance_treshold = 5e-08, max_results
     ax.set_facecolor('white')
     plt.setp(ax.spines.values(), color = '#444444')
     ax.grid(False)
-    ax.axhline(y = -np.log10(significance_treshold), linestyle = '--', linewidth = 1, color = 'red')
+    
+    if significance_treshold is not None:
+        ax.axhline(y = -np.log10(significance_treshold), linestyle = '--', linewidth = 1, color = 'red')
     
     gwas_results_per_chrom = gwas_results.groupby('chromosome')
     max_y = 0

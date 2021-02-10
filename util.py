@@ -773,9 +773,9 @@ def resolve_quasi_complete_separation_by_removing_binary_columns(X, y):
     When performing logistic regression of y against X, the matrix X must be of full rank; otherwise (i.e. if the columns of X are
     linearly dependent), then statsmodel's Logit model gives a singular-matrix error. It also appears that quasi-complete separation
     causes troubles, namely if the columns of X are linearly dependent conditioned on y. In other words, assuming that y is binary,
-    we that X[y, :] would still be of full rank (we assume that the vast majorit of records have a negative y value, and only a small
-    fraction have a positive value, so given that X is of full rank we need not worry about X[~y, :]). To resolve this problem, this
-    function will remove binary columns of X until X[y, :] is of full rank. Whenever a column of X is removed, we also remove the
+    we need that X[y, :] would still be of full rank (we assume that the vast majority of records have a negative y value, and only
+    a small fraction have a positive value, so given that X is of full rank we need not worry about X[~y, :]). To resolve this problem,
+    this function will remove binary columns of X until X[y, :] is of full rank. Whenever a column of X is removed, we also remove the
     corresponding records (rows of X and y) that have those values (so if a removed column represent some covariate, e.g. a certain
     batch, we also remove all the samples from this batch in order for not having any covariates not accounted for).
     @param X (pd.DataFrame): The exogenous variables (rows are records, columns are variables).

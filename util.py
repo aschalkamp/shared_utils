@@ -2,6 +2,7 @@ import sys
 import os
 import re
 import gc
+import importlib
 from collections import defaultdict
 from functools import reduce
 from datetime import datetime, timedelta
@@ -74,7 +75,8 @@ def create_time_measure_if_verbose(opening_statement, verbose):
         return TimeMeasure(opening_statement)
     else:
         return DummyContext()
-    
+
+
 ### General ###
 
 def get_nullable(value, default_value):
@@ -82,6 +84,16 @@ def get_nullable(value, default_value):
         return default_value
     else:
         return value
+        
+        
+### Reflection ###
+
+def load_object(full_object_name):
+    name_parts = full_object_name.split('.')
+    object_name = name_parts[-1]
+    module_name = '.'.join(name_parts[:-1])
+    module = importlib.import_module(module_name)
+    return getattr(module, object_name)
     
     
 ### Strings ###

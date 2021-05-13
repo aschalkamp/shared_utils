@@ -8,17 +8,8 @@ from functools import reduce
 from datetime import datetime, timedelta
 import json
 
-import argparse
-
 import numpy as np
 import pandas as pd
-from scipy.stats import fisher_exact, rankdata, norm as norm_dist
-from statsmodels.sandbox.stats.multicomp import multipletests
-
-import matplotlib.pyplot as plt
-from matplotlib import patches
-
-from Bio.Seq import Seq
 
 
 ### Logging ###
@@ -835,9 +826,11 @@ def resolve_quasi_complete_separation_by_removing_binary_columns(X, y):
 ### Statistics ###
 
 def to_normal_z_values(raw_values):
+
+    from scipy.stats import rankdata, norm
     
     pvals = (rankdata(raw_values) - 0.5) / len(raw_values)
-    normal_z_values = norm_dist.ppf(pvals)
+    normal_z_values = norm.ppf(pvals)
     
     if isinstance(raw_values, pd.Series):
         return pd.Series(normal_z_values, index = raw_values.index)
@@ -845,6 +838,8 @@ def to_normal_z_values(raw_values):
         return normal_z_values
 
 def multipletests_with_nulls(values, method = 'fdr_bh'):
+
+    from statsmodels.stats.multitest import multipletests
     
     significance = np.zeros(len(values), dtype = bool)
     qvals = np.nan * np.empty(len(values))
@@ -856,6 +851,8 @@ def multipletests_with_nulls(values, method = 'fdr_bh'):
     return significance, qvals
     
 def test_enrichment(mask1, mask2):
+
+    from scipy.stats import fisher_exact
 
     assert len(mask1) == len(mask2)
     
@@ -875,6 +872,8 @@ def test_enrichment(mask1, mask2):
     return n1, n2, n_both, n_total, n_expected, enrichment_factor, contingency_table, pval
     
 def test_enrichment_sets(set1, set2, n_total):
+
+    from scipy.stats import fisher_exact
     
     n1 = len(set1)
     n2 = len(set2)
@@ -908,14 +907,20 @@ def transpose_h5f_dataset(h5f, src_name, dst_name, max_memory_bytes):
 ### Matplotlib ###
 
 def draw_rectangle(ax, start_x, end_x, start_y, end_y, **kwargs):
+    from matplotlib import patches
     ax.add_patch(patches.Rectangle((start_x, start_y), end_x - start_x, end_y - start_y, **kwargs))
     
 def set_ax_border_color(ax, color):
+
+    import matplotlib.pyplot as plt
+
     for child in ax.get_children():
         if isinstance(child, plt.matplotlib.spines.Spine):
             child.set_color(color)
     
 def plot_prediction_scatter(y_pred, y_true, value = 'value'):
+
+    import matplotlib.pyplot as plt
     
     log(pearsonr(y_pred, y_true))
     log(spearmanr(y_pred, y_true))
@@ -927,6 +932,8 @@ def plot_prediction_scatter(y_pred, y_true, value = 'value'):
     
 def draw_pvals_qq_plot(pvals, max_density = 100, min_pval = None, ax = None, figsize = (7, 7), scatter_options = {}, \
         xlabel = 'Expected p-values (-log10)', ylabel = 'Observed p-values (-log10)'):
+    
+    import matplotlib.pyplot as plt
     
     if 'color' not in scatter_options:
         scatter_options['color'] = '#2e75b6'
@@ -985,6 +992,8 @@ def draw_manhattan_plot(gwas_results, significance_treshold = 5e-08, max_results
     - position (int)
     - pval (float)
     '''
+    
+    import matplotlib.pyplot as plt
         
     CHROMS = list(map(str, range(1, 23))) + ['X', 'Y']
     CHROM_TO_COLOR = {'1': '#0100fb', '2': '#ffff00', '3': '#00ff03', '4': '#bfbfbf', '5': '#acdae9', '6': '#a020f1',
@@ -1048,6 +1057,9 @@ def draw_manhattan_plot(gwas_results, significance_treshold = 5e-08, max_results
 ### Biopython Helper Functions ###
 
 def as_biopython_seq(seq):
+
+    from Bio.Seq import Seq
+
     if isinstance(seq, Seq):
         return seq
     elif isinstance(seq, str):

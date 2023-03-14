@@ -730,7 +730,7 @@ def get_row_last_values(df):
     return result
 
 def get_visit(df,field_type):
-    
+    """added function to allow extraction of specific visits, ie imaging done at visit 2 whereas most other at baseline"""
     result = pd.Series(np.nan, index = df.index)
     ID = re.findall(r'^\D*(\d+)',df.columns[0])[0]
     column = f'{ID}-{field_type}.0'

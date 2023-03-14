@@ -367,7 +367,7 @@ def get_parser_bool_type(parser):
 
     def _bool_type(value):
         if isinstance(value, bool):
-           return value
+            return value
         if value.lower() in ['yes', 'true', 't', 'y', '1']:
             return True
         elif value.lower() in ['no', 'false', 'f', 'n', '0']:
@@ -726,6 +726,15 @@ def get_row_last_values(df):
 
     for column in df.columns[::-1]:
         result = result.where(pd.notnull(result), df[column])
+
+    return result
+
+def get_visit(df,field_type):
+    
+    result = pd.Series(np.nan, index = df.index)
+    ID = re.findall(r'^\D*(\d+)',df.columns[0])[0]
+    column = f'{ID}-{field_type}.0'
+    result = df[column]
 
     return result
     
